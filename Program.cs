@@ -9,7 +9,7 @@ namespace theHiddenGame {
         public int prevY;
         public int length;
         public string direction;
-        public Thread mainThread;
+
 
         public Snake(int x, int y) {
             this.x = x;
@@ -18,53 +18,50 @@ namespace theHiddenGame {
             this.prevY = y;
             this.length = 1;
             this.direction = "right";
-
-            this.mainThread = new Thread(new ThreadStart(this.Move));
-            this.mainThread.Start();
         }
+
 
         public void Move() {
-            while (true) {
-                switch (this.direction) {
-                    case "up":
-                        Thread.Sleep(150);
-                        if (this.y > 0)
-                            this.y--;
-                        else
-                            Game.GameOver();
-                        break;
-                    case "down":
-                        Thread.Sleep(150);
-                        if (this.y < Console.WindowHeight - 1)
-                            this.y++;
-                        else
-                            Game.GameOver();
-                        break;
-                    case "left":
-                        Thread.Sleep(80);
-                        if (this.x > 0)
-                            this.x--;
-                        else
-                            Game.GameOver();
-                        break;
-                    case "right":
-                        Thread.Sleep(80);
-                        if (this.x < Console.WindowWidth - 1)
-                            this.x++;
-                        else
-                            Game.GameOver();
-                        break;
-                }
-                Console.ForegroundColor = ConsoleColor.Black;
-                Console.SetCursorPosition(this.prevX, this.prevY);
-                Console.Write(' ');
-                Console.ForegroundColor = ConsoleColor.Green;
-                Console.SetCursorPosition(this.x, this.y);
-                Console.Write('x');
-                this.prevX = this.x;
-                this.prevY = this.y;
+            switch (this.direction) {
+                case "up":
+                    Thread.Sleep(150);
+                    if (this.y > 0)
+                        this.y--;
+                    else
+                        Game.GameOver();
+                    break;
+                case "down":
+                    Thread.Sleep(150);
+                    if (this.y < Console.WindowHeight - 1)
+                        this.y++;
+                    else
+                        Game.GameOver();
+                    break;
+                case "left":
+                    Thread.Sleep(80);
+                    if (this.x > 0)
+                        this.x--;
+                    else
+                        Game.GameOver();
+                    break;
+                case "right":
+                    Thread.Sleep(80);
+                    if (this.x < Console.WindowWidth - 1)
+                        this.x++;
+                    else
+                        Game.GameOver();
+                    break;
             }
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.SetCursorPosition(this.x, this.y);
+            Console.Write('x');
+            Console.ForegroundColor = ConsoleColor.Black;
+            Console.SetCursorPosition(this.prevX, this.prevY);
+            Console.Write(' ');
+            this.prevX = this.x;
+            this.prevY = this.y;
         }
+
 
         public void ChangeDirection(ConsoleKey key) {
             switch (key) {
@@ -87,9 +84,11 @@ namespace theHiddenGame {
             }
         }
 
+
         public bool IsEating(Apple apple) {
             return (this.x == apple.x && this.y == apple.y);
         }
+
 
         public void Grow() {
             this.length++;
@@ -97,9 +96,11 @@ namespace theHiddenGame {
     }
 
 
+
     class Apple {
         public int x;
         public int y;
+
 
         public Apple() {
             Random r = new Random();
@@ -110,6 +111,7 @@ namespace theHiddenGame {
             Console.Write('+');
         }
 
+
         ~Apple() {
             Console.ForegroundColor = ConsoleColor.Black;
             Console.SetCursorPosition(this.x, this.y);
@@ -118,12 +120,38 @@ namespace theHiddenGame {
     }
 
 
+
     class Game {
         static Snake snake;
         static Apple apple;
-        static Thread collisionsThread;
-        static Thread keyThread;
         static int score;
+        static int highScore;
+        static bool gameOver;
+        static Thread keyThread;
+
+
+        public static void Main() {
+            Console.CursorVisible = false;
+            Console.Title = "theHiddenGame";
+
+            if (highScore == 0)
+                StartScreen();
+
+            Console.Clear();
+            snake = new Snake(Console.WindowWidth / 2, Console.WindowHeight / 2);
+            apple = new Apple();
+            score = 0;
+            gameOver = false;
+
+            keyThread = new Thread(new ThreadStart(GetKeyPresses));
+            keyThread.Start();
+
+            while (!gameOver) {
+                snake.Move();
+                CheckCollisions();
+            }
+        }
+
 
         public static void StartScreen() {
             Console.Clear();
@@ -142,65 +170,62 @@ namespace theHiddenGame {
             Console.ReadKey();
         }
 
+
         public static void EndScreen() {
             Console.Clear();
             Console.ForegroundColor = ConsoleColor.Red;
             CenterText("Game Over!", 3);
             Console.ForegroundColor = ConsoleColor.White;
             CenterText($"Score: {score}", 5);
+            CenterText($"High Score: {highScore}", 6);
             CenterText($"Snake Length: {snake.length}", 7);
-            Console.ReadKey();
-        }
-
-        public static void CenterText(string text, int y) {
-            Console.SetCursorPosition(Console.WindowWidth / 2 - text.Length / 2 - 1, y);
-            Console.Write(text);
-        }
-
-        public static void Main() {
-            Console.CursorVisible = false;
-            Console.Title = "theHiddenGame";
-
-            StartScreen();
-
-            Console.Clear();
-            snake = new Snake(Console.WindowWidth / 2, Console.WindowHeight / 2);
-            apple = new Apple();
-            score = 0;
-
-            collisionsThread = new Thread(new ThreadStart(CheckCollisions));
-            collisionsThread.Start();
-            keyThread = new Thread(new ThreadStart(GetKeyPresses));
-            keyThread.Start();
-        }
-
-        public static void GameOver() {
-            collisionsThread.Abort();
-            keyThread.Abort();
-            EndScreen();
-            snake.mainThread.Abort();
-        }
-
-        public static void CheckCollisions() {
-            while(true) {
-                if (snake.IsEating(apple)) {
-                    score++;
-                    snake.Grow();
-                    Console.Beep();
-                    snake.mainThread.Suspend();
-                    apple = new Apple();
-                    snake.mainThread.Resume();
-                }
+            Console.ForegroundColor = ConsoleColor.Gray;
+            CenterText($"Press space to retry.", 9);
+            ConsoleKeyInfo keyInfo = Console.ReadKey(true);
+            if (keyInfo.Key == ConsoleKey.Spacebar)
+                Main();
+            else {
+                Console.Clear();
+                Console.ForegroundColor = ConsoleColor.Green;
+                CenterText("Thanks for playing!", 3);
+                Thread.Sleep(3000);
             }
         }
 
+
+        public static void GameOver() {
+            Yeah();
+            gameOver = true;
+            keyThread.Abort();
+            if (score > highScore)
+                highScore = score;
+            EndScreen();
+        }
+
+
         public static void GetKeyPresses() {
-            while (true) {
+            while (!gameOver) {
                 ConsoleKeyInfo keyInfo = Console.ReadKey(true);
                 if (keyInfo.Key != ConsoleKey.Escape) {
                     snake.ChangeDirection(keyInfo.Key);
                 }
             }
+        }
+
+
+        public static void CheckCollisions() {
+            if (snake.IsEating(apple)) {
+                score += snake.length;
+                snake.Grow();
+                Console.Beep();
+                apple = new Apple();
+            }
+        }
+
+
+        public static void CenterText(string text, int y) {
+            Console.SetCursorPosition(Console.WindowWidth / 2 - text.Length / 2 - 1, y);
+            Console.Write(text);
         }
     }
 }
