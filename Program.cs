@@ -1,97 +1,129 @@
 ﻿using System;
 using System.Threading;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace theHiddenGame {
-    class Snake {
+    class SnakeBody {
         public int x;
         public int y;
-        public int prevX;
-        public int prevY;
+
+
+        public SnakeBody(int x, int y) {
+            this.x = x;
+            this.y = y;
+        }
+    }
+
+
+
+    class Snake {
+        public Queue<SnakeBody> body;
         public int length;
-        public string direction;
+        private string direction;
+        private bool toGrow;
 
 
         public Snake(int x, int y) {
-            this.x = x;
-            this.y = y;
-            this.prevX = x;
-            this.prevY = y;
-            this.length = 1;
-            this.direction = "right";
+            direction = "right";
+            length = 1;
+            toGrow = false;
+            body = new Queue<SnakeBody>();
+            body.Enqueue(new SnakeBody(x, y));
         }
 
 
         public void Move() {
-            switch (this.direction) {
+            SnakeBody head = body.Last();
+            int xDiff = 0;
+            int yDiff = 0;
+
+            switch (direction) {
                 case "up":
                     Thread.Sleep(150);
-                    if (this.y > 0)
-                        this.y--;
+                    if (head.y > 0)
+                        yDiff--;
                     else
                         Game.GameOver();
                     break;
+
                 case "down":
                     Thread.Sleep(150);
-                    if (this.y < Console.WindowHeight - 1)
-                        this.y++;
+                    if (head.y < Console.WindowHeight - 1)
+                        yDiff++;
                     else
                         Game.GameOver();
                     break;
+
                 case "left":
                     Thread.Sleep(80);
-                    if (this.x > 0)
-                        this.x--;
+                    if (head.x > 0)
+                        xDiff--;
                     else
                         Game.GameOver();
                     break;
+
                 case "right":
                     Thread.Sleep(80);
-                    if (this.x < Console.WindowWidth - 1)
-                        this.x++;
+                    if (head.x < Console.WindowWidth - 1)
+                        xDiff++;
                     else
                         Game.GameOver();
                     break;
             }
+
+            SnakeBody newHead = new SnakeBody(head.x + xDiff, head.y + yDiff);
+            foreach (SnakeBody b in body) {
+                if (newHead.x == b.x && newHead.y == b.y)
+                    Game.GameOver();
+            }
+
+            body.Enqueue(newHead);
             Console.ForegroundColor = ConsoleColor.Green;
-            Console.SetCursorPosition(this.x, this.y);
+            Console.SetCursorPosition(head.x, head.y);
             Console.Write('x');
-            Console.ForegroundColor = ConsoleColor.Black;
-            Console.SetCursorPosition(this.prevX, this.prevY);
-            Console.Write(' ');
-            this.prevX = this.x;
-            this.prevY = this.y;
+            Console.SetCursorPosition(newHead.x, newHead.y);
+            Console.Write('x');
+
+            if (!toGrow) {
+                SnakeBody last = body.Dequeue();
+                Console.SetCursorPosition(last.x, last.y);
+                Console.Write(' ');
+            }
+            else toGrow = false;
         }
 
 
         public void ChangeDirection(ConsoleKey key) {
             switch (key) {
                 case ConsoleKey.UpArrow:
-                    if (this.direction != "down")
-                        this.direction = "up";
+                    if (direction != "down")
+                        direction = "up";
                     break;
                 case ConsoleKey.DownArrow:
-                    if (this.direction != "up")
-                        this.direction = "down";
+                    if (direction != "up")
+                        direction = "down";
                     break;
                 case ConsoleKey.LeftArrow:
-                    if (this.direction != "right")
-                        this.direction = "left";
+                    if (direction != "right")
+                        direction = "left";
                     break;
                 case ConsoleKey.RightArrow:
-                    if (this.direction != "left")
-                        this.direction = "right";
+                    if (direction != "left")
+                        direction = "right";
                     break;
             }
         }
 
 
         public bool IsEating(Apple apple) {
-            return (this.x == apple.x && this.y == apple.y);
+            return (body.Last().x == apple.x && body.Last().y == apple.y);
         }
 
 
         public void Grow() {
-            this.length++;
+            length++;
+            toGrow = true;
         } 
     }
 
@@ -104,17 +136,16 @@ namespace theHiddenGame {
 
         public Apple() {
             Random r = new Random();
-            this.x = r.Next(1, Console.WindowWidth - 2);
-            this.y = r.Next(1, Console.WindowHeight - 2);
+            x = r.Next(1, Console.WindowWidth - 2);
+            y = r.Next(1, Console.WindowHeight - 2);
             Console.ForegroundColor = ConsoleColor.Red;
-            Console.SetCursorPosition(this.x, this.y);
+            Console.SetCursorPosition(x, y);
             Console.Write('+');
         }
 
 
         ~Apple() {
-            Console.ForegroundColor = ConsoleColor.Black;
-            Console.SetCursorPosition(this.x, this.y);
+            Console.SetCursorPosition(x, y);
             Console.Write(' ');
         }
     }
@@ -178,9 +209,10 @@ namespace theHiddenGame {
             Console.ForegroundColor = ConsoleColor.White;
             CenterText($"Score: {score}", 5);
             CenterText($"High Score: {highScore}", 6);
-            CenterText($"Snake Length: {snake.length}", 7);
+            CenterText($"Snake Length: {snake.body.Count}", 7);
             Console.ForegroundColor = ConsoleColor.Gray;
             CenterText($"Press space to retry.", 9);
+
             ConsoleKeyInfo keyInfo = Console.ReadKey(true);
             if (keyInfo.Key == ConsoleKey.Spacebar)
                 Main();
@@ -188,13 +220,12 @@ namespace theHiddenGame {
                 Console.Clear();
                 Console.ForegroundColor = ConsoleColor.Green;
                 CenterText("Thanks for playing!", 3);
-                Thread.Sleep(3000);
+                Thread.Sleep(2000);
             }
         }
 
 
         public static void GameOver() {
-            Yeah();
             gameOver = true;
             keyThread.Abort();
             if (score > highScore)
@@ -206,7 +237,9 @@ namespace theHiddenGame {
         public static void GetKeyPresses() {
             while (!gameOver) {
                 ConsoleKeyInfo keyInfo = Console.ReadKey(true);
-                if (keyInfo.Key != ConsoleKey.Escape) {
+                if (keyInfo.Key == ConsoleKey.T)
+                    snake.Grow();
+                else if (keyInfo.Key != ConsoleKey.Escape) {
                     snake.ChangeDirection(keyInfo.Key);
                 }
             }
