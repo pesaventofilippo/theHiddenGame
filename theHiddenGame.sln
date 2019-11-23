@@ -1,6 +1,7 @@
-
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29403.142
+MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "theHiddenGame", "theHiddenGame.csproj", "{661946E8-4918-4F5D-8D2A-B3D6E8666828}"
 EndProject
 Global
@@ -9,9 +10,15 @@ Global
 		Release|anycpu = Release|anycpu
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{661946E8-4918-4F5D-8D2A-B3D6E8666828}.Debug|anycpu.ActiveCfg = Debug|anycpu
-		{661946E8-4918-4F5D-8D2A-B3D6E8666828}.Debug|anycpu.Build.0 = Debug|anycpu
-		{661946E8-4918-4F5D-8D2A-B3D6E8666828}.Release|anycpu.ActiveCfg = Release|anycpu
-		{661946E8-4918-4F5D-8D2A-B3D6E8666828}.Release|anycpu.Build.0 = Release|anycpu
+		{661946E8-4918-4F5D-8D2A-B3D6E8666828}.Debug|anycpu.ActiveCfg = Debug|Any CPU
+		{661946E8-4918-4F5D-8D2A-B3D6E8666828}.Debug|anycpu.Build.0 = Debug|Any CPU
+		{661946E8-4918-4F5D-8D2A-B3D6E8666828}.Release|anycpu.ActiveCfg = Release|Any CPU
+		{661946E8-4918-4F5D-8D2A-B3D6E8666828}.Release|anycpu.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {E87E6447-B719-402D-8034-A483797C7474}
 	EndGlobalSection
 EndGlobal

@@ -200,7 +200,7 @@ namespace theHiddenGame {
             Console.ForegroundColor = ConsoleColor.White;
             Console.ReadKey();
         }
-
+        
 
         public static void EndScreen() {
             Console.Clear();
@@ -237,9 +237,7 @@ namespace theHiddenGame {
         public static void GetKeyPresses() {
             while (!gameOver) {
                 ConsoleKeyInfo keyInfo = Console.ReadKey(true);
-                if (keyInfo.Key == ConsoleKey.T)
-                    snake.Grow();
-                else if (keyInfo.Key != ConsoleKey.Escape) {
+                if (keyInfo.Key != ConsoleKey.Escape) {
                     snake.ChangeDirection(keyInfo.Key);
                 }
             }
